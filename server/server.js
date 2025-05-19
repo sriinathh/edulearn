@@ -63,6 +63,11 @@ app.get("/api/health-check", (req, res) => {
   });
 });
 
+// Root route to avoid 404 on base URL
+app.get("/", (req, res) => {
+  res.send("EduLearn Backend is running ✅");
+});
+
 // Socket.io
 const onlineUsers = new Map();
 

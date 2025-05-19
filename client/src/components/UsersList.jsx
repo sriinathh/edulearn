@@ -15,11 +15,9 @@ import {
   Flex,
   Spinner,
   Tooltip,
-  Button,
-  IconButton,
   useColorModeValue
 } from '@chakra-ui/react';
-import { FiSearch, FiUser, FiInfo, FiMessageSquare } from 'react-icons/fi';
+import { FiSearch, FiUser, FiInfo } from 'react-icons/fi';
 import { format } from 'date-fns';
 import { useUser } from '../context/UserContext';
 import { getMockUsers } from '../utils/socketService';
@@ -30,25 +28,22 @@ const UsersList = ({ socket, communityId, currentUser, onSelectUser }) => {
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
-  
-  // Colors
+
+  // Colors for light/dark mode
   const itemBgColor = useColorModeValue('white', 'gray.800');
   const itemHoverBgColor = useColorModeValue('gray.50', 'gray.700');
 
   useEffect(() => {
     if (socket && communityId && currentUser) {
       setLoading(true);
-      
-      // Clear previous users when community changes
       setUsers([]);
       setFilteredUsers([]);
-      
+
       // Request active users from server
       socket.emit('get_active_users', { communityId });
-      
-      // Listen for active users list
+
+      // Listener for active users list
       socket.on(`active_users_${communityId}`, (activeUsers) => {
-        // Make sure current user is included
         const currentUserIncluded = activeUsers.some(user => user.id === currentUser.id);
         
         let updatedUsers = activeUsers;
@@ -63,23 +58,21 @@ const UsersList = ({ socket, communityId, currentUser, onSelectUser }) => {
             ...activeUsers
           ];
         } else {
-          // Mark the current user
           updatedUsers = activeUsers.map(user => ({
             ...user,
             isCurrentUser: user.id === currentUser.id
           }));
         }
-        
+
         setUsers(updatedUsers);
         setFilteredUsers(updatedUsers);
         setLoading(false);
       });
-      
-      // If no response in 2 seconds, use mock data
+
+      // If no response within 2 seconds, fallback to mock users
       const timeout = setTimeout(() => {
         if (loading) {
           const mockUsers = getMockUsers(currentUser.id);
-          // Replace the first user with actual user data
           const updatedMockUsers = [
             {
               ...mockUsers[0],
@@ -90,57 +83,56 @@ const UsersList = ({ socket, communityId, currentUser, onSelectUser }) => {
             },
             ...mockUsers.slice(1)
           ];
-          
           setUsers(updatedMockUsers);
           setFilteredUsers(updatedMockUsers);
           setLoading(false);
         }
       }, 2000);
-      
+
       // Listen for user status changes
       socket.on('user_status_change', (userData) => {
         setUsers(prevUsers => {
-          const userExists = prevUsers.some(user => user.id === userData.id);
-          
-          if (userExists) {
-            return prevUsers.map(user => 
-              user.id === userData.id ? { ...user, ...userData } : user
-            );
+          const exists = prevUsers.some(user => user.id === userData.id);
+          if (exists) {
+            return prevUsers.map(user => user.id === userData.id ? { ...user, ...userData } : user);
           } else {
             return [...prevUsers, userData];
           }
         });
       });
-      
+
       // Listen for user disconnection
       socket.on('user_disconnected', (userId) => {
-        setUsers(prevUsers => 
-          prevUsers.map(user => 
+        setUsers(prevUsers =>
+          prevUsers.map(user =>
             user.id === userId 
-              ? { ...user, status: 'offline', lastActive: new Date().toISOString() } 
+              ? { ...user, status: 'offline', lastActive: new Date().toISOString() }
               : user
           )
         );
       });
-      
-      // Listen for new user joining the community
+
+      // Listen for new user joining community
       socket.on('user_joined_community', (userData) => {
-        console.log('User joined community:', userData);
         if (userData.communityId === communityId) {
           setUsers(prevUsers => {
             if (!prevUsers.some(user => user.id === userData.user.id)) {
-              return [...prevUsers, { 
-                ...userData.user, 
-                status: 'online', 
-                isCurrentUser: userData.user.id === currentUser.id,
-                lastActive: new Date().toISOString()
-              }];
+              return [
+                ...prevUsers,
+                {
+                  ...userData.user,
+                  status: 'online',
+                  isCurrentUser: userData.user.id === currentUser.id,
+                  lastActive: new Date().toISOString()
+                }
+              ];
             }
             return prevUsers;
           });
         }
       });
-      
+
+      // Cleanup on unmount or dependencies change
       return () => {
         clearTimeout(timeout);
         socket.off(`active_users_${communityId}`);
@@ -149,9 +141,8 @@ const UsersList = ({ socket, communityId, currentUser, onSelectUser }) => {
         socket.off('user_joined_community');
       };
     } else {
-      // If not in a community context, load all users for direct messaging
+      // No community context - show mock users except current user
       const allUsers = getMockUsers(userContext?.id);
-      // Filter out current user
       const filteredList = allUsers.filter(user => user.id !== userContext?.id);
       setUsers(filteredList);
       setFilteredUsers(filteredList);
@@ -165,7 +156,7 @@ const UsersList = ({ socket, communityId, currentUser, onSelectUser }) => {
       setFilteredUsers(users);
     } else {
       const query = searchTerm.toLowerCase();
-      const filtered = users.filter(user => 
+      const filtered = users.filter(user =>
         user.name.toLowerCase().includes(query) ||
         (user.email && user.email.toLowerCase().includes(query))
       );
@@ -173,7 +164,7 @@ const UsersList = ({ socket, communityId, currentUser, onSelectUser }) => {
     }
   }, [users, searchTerm]);
 
-  // Get status color based on user status
+  // Status color helper
   const getStatusColor = (status) => {
     switch (status) {
       case 'online':
@@ -187,77 +178,57 @@ const UsersList = ({ socket, communityId, currentUser, onSelectUser }) => {
     }
   };
 
-  // Format time ago for last active
+  // Format last active time
   const formatTimeAgo = (timestamp) => {
+    if (!timestamp) return 'Unknown';
+
     const now = new Date();
-    const pastDate = new Date(timestamp);
-    const diff = now - pastDate;
-    
+    const past = new Date(timestamp);
+    const diff = now - past;
     const minutes = Math.floor(diff / 60000);
-    
+
     if (minutes < 1) return 'just now';
     if (minutes === 1) return '1 minute ago';
     if (minutes < 60) return `${minutes} minutes ago`;
-    
+
     const hours = Math.floor(minutes / 60);
     if (hours === 1) return '1 hour ago';
     if (hours < 24) return `${hours} hours ago`;
-    
+
     const days = Math.floor(hours / 24);
     if (days === 1) return 'yesterday';
+
     return `${days} days ago`;
   };
 
+  // Separate users by status for grouping
   const onlineUsers = filteredUsers.filter(user => user.status === 'online');
   const awayUsers = filteredUsers.filter(user => user.status === 'away');
   const offlineUsers = filteredUsers.filter(user => user.status === 'offline');
-
-  // Format last active time
-  const formatLastActive = (timestamp) => {
-    if (!timestamp) return 'Unknown';
-    
-    const date = new Date(timestamp);
-    const now = new Date();
-    
-    // If less than a minute
-    const diffInMin = Math.floor((now - date) / (1000 * 60));
-    
-    if (diffInMin < 1) return 'Just now';
-    if (diffInMin < 60) return `${diffInMin}m ago`;
-    
-    // If less than a day
-    const diffInHours = Math.floor(diffInMin / 60);
-    if (diffInHours < 24) return `${diffInHours}h ago`;
-    
-    // Otherwise show date
-    return format(date, 'MMM d, h:mm a');
-  };
 
   return (
     <Box>
       <Flex justify="space-between" align="center" mb={4}>
         <Heading size="md">Active Users</Heading>
         <Tooltip label="Shows real-time active users in this community">
-          <Box cursor="pointer">
-            <FiInfo />
-          </Box>
+          <Box cursor="pointer"><FiInfo /></Box>
         </Tooltip>
       </Flex>
-      
+
       <InputGroup mb={4}>
         <InputLeftElement pointerEvents="none">
           <FiSearch color="gray.300" />
         </InputLeftElement>
-        <Input 
+        <Input
           placeholder="Search users..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           borderRadius="full"
         />
       </InputGroup>
-      
+
       <Divider mb={4} />
-      
+
       {loading ? (
         <Flex justify="center" my={8}>
           <Spinner size="lg" color="teal.500" />
@@ -269,28 +240,26 @@ const UsersList = ({ socket, communityId, currentUser, onSelectUser }) => {
               <Text fontWeight="bold" mb={2} color="gray.600">
                 Online - {onlineUsers.length}
               </Text>
-              
+
               <VStack spacing={3} align="stretch" mb={6}>
                 {onlineUsers.map(user => (
-                  <HStack 
-                    key={user.id} 
-                    className="user-item"
+                  <HStack
+                    key={user.id}
                     p={2}
                     borderRadius="md"
-                    bg={user.isCurrentUser ? "teal.50" : "white"}
-                    _hover={{ bg: 'gray.50' }}
+                    bg={user.isCurrentUser ? "teal.50" : itemBgColor}
+                    _hover={{ bg: itemHoverBgColor, cursor: 'pointer' }}
+                    onClick={() => onSelectUser(user)}
                     transition="all 0.2s"
                   >
-                    <Box position="relative" className="user-avatar">
-                      <Avatar size="sm" name={user.name} src={user.avatar}>
-                        <AvatarBadge 
-                          boxSize="1em" 
-                          bg={getStatusColor(user.status)} 
-                          border="2px solid white" 
-                        />
-                      </Avatar>
-                    </Box>
-                    
+                    <Avatar size="sm" name={user.name} src={user.avatar}>
+                      <AvatarBadge
+                        boxSize="1em"
+                        bg={getStatusColor(user.status)}
+                        border="2px solid white"
+                      />
+                    </Avatar>
+
                     <Box flex="1">
                       <HStack>
                         <Text fontWeight={user.isCurrentUser ? "bold" : "medium"}>
@@ -311,182 +280,89 @@ const UsersList = ({ socket, communityId, currentUser, onSelectUser }) => {
               </VStack>
             </>
           )}
-          
+
           {awayUsers.length > 0 && (
             <>
               <Text fontWeight="bold" mb={2} color="gray.600">
                 Away - {awayUsers.length}
               </Text>
-              
+
               <VStack spacing={3} align="stretch" mb={6}>
                 {awayUsers.map(user => (
-                  <HStack 
-                    key={user.id} 
-                    className="user-item"
+                  <HStack
+                    key={user.id}
                     p={2}
                     borderRadius="md"
-                    _hover={{ bg: 'gray.50' }}
+                    bg={itemBgColor}
+                    _hover={{ bg: itemHoverBgColor, cursor: 'pointer' }}
+                    onClick={() => onSelectUser(user)}
+                    transition="all 0.2s"
                   >
-                    <Box position="relative" className="user-avatar">
-                      <Avatar size="sm" name={user.name} src={user.avatar}>
-                        <AvatarBadge 
-                          boxSize="1em" 
-                          bg={getStatusColor(user.status)} 
-                          border="2px solid white" 
-                        />
-                      </Avatar>
-                    </Box>
-                    
+                    <Avatar size="sm" name={user.name} src={user.avatar}>
+                      <AvatarBadge
+                        boxSize="1em"
+                        bg={getStatusColor(user.status)}
+                        border="2px solid white"
+                      />
+                    </Avatar>
+
                     <Box flex="1">
                       <Text fontWeight="medium">{user.name}</Text>
-                      <Text fontSize="xs" color="gray.500">
-                        {formatTimeAgo(user.lastActive)}
-                      </Text>
+                      {user.email && (
+                        <Text fontSize="xs" color="gray.500">
+                          {user.email}
+                        </Text>
+                      )}
                     </Box>
                   </HStack>
                 ))}
               </VStack>
             </>
           )}
-          
+
           {offlineUsers.length > 0 && (
             <>
               <Text fontWeight="bold" mb={2} color="gray.600">
                 Offline - {offlineUsers.length}
               </Text>
-              
+
               <VStack spacing={3} align="stretch">
                 {offlineUsers.map(user => (
-                  <HStack 
-                    key={user.id} 
-                    className="user-item"
+                  <HStack
+                    key={user.id}
                     p={2}
                     borderRadius="md"
-                    _hover={{ bg: 'gray.50' }}
-                    opacity={0.7}
+                    bg={itemBgColor}
+                    opacity={0.6}
+                    _hover={{ bg: itemHoverBgColor, cursor: 'pointer' }}
+                    onClick={() => onSelectUser(user)}
+                    transition="all 0.2s"
                   >
-                    <Box position="relative" className="user-avatar">
-                      <Avatar size="sm" name={user.name} src={user.avatar}>
-                        <AvatarBadge 
-                          boxSize="1em" 
-                          bg={getStatusColor(user.status)} 
-                          border="2px solid white" 
-                        />
-                      </Avatar>
-                    </Box>
-                    
+                    <Avatar size="sm" name={user.name} src={user.avatar}>
+                      <AvatarBadge
+                        boxSize="1em"
+                        bg={getStatusColor(user.status)}
+                        border="2px solid white"
+                      />
+                    </Avatar>
+
                     <Box flex="1">
-                      <Text>{user.name}</Text>
-                      <Text fontSize="xs" color="gray.500">
-                        {formatTimeAgo(user.lastActive)}
-                      </Text>
+                      <Text fontWeight="medium">{user.name}</Text>
+                      {user.email && (
+                        <Text fontSize="xs" color="gray.500">
+                          Last active {formatTimeAgo(user.lastActive)}
+                        </Text>
+                      )}
                     </Box>
                   </HStack>
                 ))}
               </VStack>
             </>
           )}
-          
-          {filteredUsers.length === 0 && (
-            <Flex 
-              direction="column" 
-              align="center" 
-              justify="center" 
-              h="200px" 
-              bg="gray.50" 
-              borderRadius="md"
-              p={4}
-            >
-              <FiUser size={40} color="#A0AEC0" />
-              <Text color="gray.500" mt={4} textAlign="center">
-                No users found
-              </Text>
-            </Flex>
-          )}
         </>
       )}
-      
-      <Divider mb={4} />
-      
-      <Heading size="md" mb={4}>Direct Messages</Heading>
-      
-      {/* Search */}
-      <InputGroup mb={4}>
-        <InputLeftElement pointerEvents="none">
-          <FiSearch color="gray.300" />
-        </InputLeftElement>
-        <Input
-          placeholder="Search users..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-      </InputGroup>
-      
-      {/* Users list */}
-      <VStack spacing={2} align="stretch" maxH="500px" overflowY="auto">
-        {loading ? (
-          <Text textAlign="center" py={4} color="gray.500">Loading users...</Text>
-        ) : filteredUsers.length === 0 ? (
-          <Text textAlign="center" py={4} color="gray.500">
-            {searchTerm ? 'No users match your search' : 'No users available'}
-          </Text>
-        ) : (
-          filteredUsers.map(user => (
-            <Box
-              key={user.id}
-              p={3}
-              borderRadius="md"
-              bg={itemBgColor}
-              _hover={{ bg: itemHoverBgColor, cursor: 'pointer' }}
-              onClick={() => onSelectUser(user)}
-              boxShadow="sm"
-            >
-              <HStack spacing={3}>
-                <Box position="relative">
-                  <Avatar
-                    size="md"
-                    name={user.name}
-                    src={user.avatar}
-                  />
-                  <Badge
-                    position="absolute"
-                    bottom="0"
-                    right="0"
-                    borderRadius="full"
-                    bg={user.status === 'online' ? 'green.500' : 
-                        user.status === 'away' ? 'orange.500' : 'gray.500'}
-                    boxSize="12px"
-                    border="2px solid white"
-                  />
-                </Box>
-                
-                <Box flex="1">
-                  <Text fontWeight="bold">{user.name}</Text>
-                  <Text fontSize="xs" color="gray.500">
-                    {user.status === 'online' 
-                      ? 'Online'
-                      : `Last active ${formatLastActive(user.lastActive)}`}
-                  </Text>
-                </Box>
-                
-                <IconButton
-                  icon={<FiMessageSquare />}
-                  variant="ghost"
-                  colorScheme="blue"
-                  size="sm"
-                  aria-label="Message user"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onSelectUser(user);
-                  }}
-                />
-              </HStack>
-            </Box>
-          ))
-        )}
-      </VStack>
     </Box>
   );
 };
 
-export default UsersList; 
+export default UsersList;

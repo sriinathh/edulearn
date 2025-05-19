@@ -19,6 +19,7 @@
     "bootstrap": "^5.3.5",
     "canvas-confetti": "^1.9.3",
     "cors": "^2.8.5",
+    "date-fns": "^4.1.0",
     "file-saver": "^2.0.5",
     "framer-motion": "^11.18.2",
     "html2pdf.js": "^0.10.3",

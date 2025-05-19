@@ -73,32 +73,72 @@ body {
 .navbar .nav-links li a:hover::after {
   width: 100%;
 }
+/* Import Poppins & Orbitron fonts */
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600&family=Poppins:wght@300;500;700&display=swap');
 
 /* Hero Section */
 .hero-section {
   position: relative;
-  height: 80vh;
+  height: 100vh;
   min-height: 600px;
-  background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
-  background-size: 400% 400%;
-  animation: gradientBG 15s ease infinite;
-  overflow: hidden;
+  background: linear-gradient(-45deg, #0f2027, #203a43, #2c5364, #00c9ff, #92fe9d);
+  background-size: 600% 600%;
+  animation: gradientBG 20s ease infinite;
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
+  padding: 20px;
 }
 
+/* Gradient Animation */
 @keyframes gradientBG {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
+  0% { background-position: 0% 50%; }
+  25% { background-position: 50% 50%; }
+  50% { background-position: 100% 50%; }
+  75% { background-position: 50% 50%; }
+  100% { background-position: 0% 50%; }
 }
+
+/* Glassmorphism Content Box */
+.hero-content {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(15px);
+  border-radius: 20px;
+  padding: 40px;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  max-width: 90%;
+  animation: fadeInUp 1s ease forwards;
+}
+
+/* Animation for content */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Glowing CampusConnect! heading */
+.hero-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 3rem;
+  color: #ffffff;
+  text-shadow: 0 0 10px #00c9ff, 0 0 20px #00c9ff, 0 0 30px #92fe9d;
+  margin-bottom: 20px;
+}
+
+/* Subheading or description */
+.hero-subtitle {
+  font-family: 'Poppins', sans-serif;
+  font-size: 1.2rem;
+  color: #e0f7ff;
+  font-weight: 300;
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
 
 .hero-overlay {
   position: absolute;

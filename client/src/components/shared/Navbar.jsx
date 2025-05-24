@@ -93,6 +93,10 @@ const Navbar = () => {
           <li className={`navbar-item ${isActive('/materials')}`}>
             <Link to="/materials" className="navbar-link">Resources</Link>
           </li>
+          <li className={`navbar-item ${isActive('/notes')}`}>
+            <Link to="/notes" className="navbar-link">MegaLearn</Link> 
+          </li>
+
           <li className={`navbar-item ${isActive('/events')}`}>
             <Link to="/events" className="navbar-link">Events</Link>
           </li>
@@ -110,6 +114,11 @@ const Navbar = () => {
             <Link to="/campusconnect" className="navbar-link special">CampusAI</Link>
           </li>
         </ul>
+         
+        
+  
+
+
 
         <div className="navbar-actions">
           <button className="action-btn notification-btn">

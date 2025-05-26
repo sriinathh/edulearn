@@ -41,7 +41,7 @@ app.use((req, res, next) => {
 });
 
 // MongoDB connection
-const mongoURI = process.env.MONGO_URI || "mongodb://localhost:27017/educonnect";
+const mongoURI = process.env.MONGO_URI || "mongodb+srv://srinath:srinath123@edulearn.nt3yplp.mongodb.net/educonnect";
 mongoose
   .connect(mongoURI, {
     useNewUrlParser: true,

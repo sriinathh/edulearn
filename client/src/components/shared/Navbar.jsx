@@ -93,6 +93,9 @@ const Navbar = () => {
           <li className={`navbar-item ${isActive('/materials')}`}>
             <Link to="/materials" className="navbar-link">Resources</Link>
           </li>
+          <li className={`navbar-item ${isActive('/notes')}`}>
+            <Link to="/notes" className="navbar-link">MegaLearn</Link>
+          </li>
           <li className={`navbar-item ${isActive('/events')}`}>
             <Link to="/events" className="navbar-link">Events</Link>
           </li>

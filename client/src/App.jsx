@@ -33,7 +33,7 @@ import MaterialsPage from './components/materials/MaterialsPage';
 import EventsPage from './components/events/EventsPage';
 import UdemyStyleCoursePage from './components/courses/UdemyStyleCoursePage';
 import LectureNotes from "./pages/LectureNotes";
-
+import YoutubeToPDF from './components/YoutubeToPDF';
 
 // Create a custom theme for Chakra UI
 const colors = {
@@ -156,6 +156,7 @@ const App = () => {
             <Route path="/simple-course" element={<PrivateRoute><SimpleCourse /></PrivateRoute>} />
             <Route path="/messages" element={<DirectMessaging />} />
             <Route path="/video-lecture" element={<LectureNotes />} />
+              <Route path="/notes" element={<YoutubeToPDF />} />
           </Routes>
         </div>
       </div>
